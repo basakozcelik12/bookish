@@ -2,10 +2,14 @@ from flask import jsonify, request
 from bookish.models import db
 from bookish.models.copybook import CopyBook
 from bookish.models.book import Book
+from bookish.utils.auth import get_username_from_token
 
 def register_book_routes(app):
     @app.route('/books', methods=['POST', 'GET'])
     def handle_book():
+        username_key = get_username_from_token()
+        if not username_key:  
+            return {"error": "Invalid or expired token"}
         if request.method == 'POST':
             if request.is_json:
                 data = request.get_json()
@@ -57,6 +61,9 @@ def register_book_routes(app):
         
     @app.route('/books/<int:book_id>', methods=['GET'])
     def get_book_by_id(book_id):
+        username_key = get_username_from_token()
+        if not username_key:  
+            return {"error": "Invalid or expired token"}
         book = Book.query.get(book_id)
         if book is not None:
             result = {
@@ -80,6 +87,9 @@ def register_book_routes(app):
     
     @app.route('/users/<username>/books', methods=['GET'])
     def get_user_book(username):
+        username_key = get_username_from_token()
+        if not username_key:  
+            return {"error": "Invalid or expired token"}
         borrowed_books = CopyBook.query.filter(CopyBook.borrowed_by.ilike(f"{username}"))
         result = [
             {
